@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1081481684351",
+    "project_id": "builder-7afb0",
+    "storage_bucket": "builder-7afb0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1081481684351:android:63e481411dccceb1f1664a",
+        "android_client_info": {
+          "package_name": "com.kranin.application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoRpFZl4XEtSi-EurygnkGvBNWJ7DUrFk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
