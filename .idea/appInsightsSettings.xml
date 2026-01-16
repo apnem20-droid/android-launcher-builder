@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.kranin.application" />
+                  <option name="mobileSdkAppId" value="1:1081481684351:android:63e481411dccceb1f1664a" />
+                  <option name="projectId" value="builder-7afb0" />
+                  <option name="projectNumber" value="1081481684351" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

@@ -18,6 +18,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import android.os.Build
 import android.util.Log
+import android.view.View
+import android.widget.ProgressBar
 import androidx.core.content.FileProvider
 class ProjectManagementActivity : AppCompatActivity() {
 
@@ -32,17 +34,22 @@ class ProjectManagementActivity : AppCompatActivity() {
         val downloadBtn = findViewById<MaterialButton>(R.id.downloadBtn)
 
         downloadBtn.setOnClickListener {
-            downloadApk(projectName);
+            downloadApkWithProgress(projectName);
         }
 
     }
 
-    private fun downloadApk(projectName: String?) {
+    private fun downloadApkWithProgress(projectName: String?) {
         if (projectName.isNullOrEmpty()) return
 
-        val apkUrl = "http://l.bindhost.com/download/bind361.apk"
-        val apkFileName = "bind361.apk"
-        Log.e("APK_DOWNLOAD", "Начинаю скачивание")
+        val apkUrl = "http://l.bindhost.com/$projectName/signed.apk"
+        val apkFileName = "signed.apk"
+
+        val progressBar = findViewById<ProgressBar>(R.id.downloadProgress)
+        val downloadBtn = findViewById<MaterialButton>(R.id.downloadBtn)
+
+        progressBar.progress = 0
+        downloadBtn.isEnabled = false
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -50,9 +57,12 @@ class ProjectManagementActivity : AppCompatActivity() {
                 val connection = url.openConnection() as HttpURLConnection
                 connection.connect()
 
+                val fileLength = connection.contentLength
+
                 if (connection.responseCode != HttpURLConnection.HTTP_OK) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(this@ProjectManagementActivity, "Ошибка при скачивании", Toast.LENGTH_SHORT).show()
+                        downloadBtn.isEnabled = true
                     }
                     return@launch
                 }
@@ -63,41 +73,39 @@ class ProjectManagementActivity : AppCompatActivity() {
 
                 connection.inputStream.use { input ->
                     FileOutputStream(apkFile).use { output ->
-                        val buffer = ByteArray(8 * 1024)
-                        var bytesRead: Int
-                        while (input.read(buffer).also { bytesRead = it } != -1) {
-                            output.write(buffer, 0, bytesRead)
+                        val data = ByteArray(8 * 1024)
+                        var total: Long = 0
+                        var count: Int
+                        while (input.read(data).also { count = it } != -1) {
+                            output.write(data, 0, count)
+                            total += count
+                            if (fileLength > 0) {
+                                val progress = (total * 100 / fileLength).toInt()
+                                withContext(Dispatchers.Main) {
+                                    progressBar.progress = progress
+                                }
+                            }
                         }
                         output.flush()
                     }
                 }
 
-                if (!apkFile.exists() || apkFile.length() == 0L) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@ProjectManagementActivity, "Ошибка записи APK", Toast.LENGTH_SHORT).show()
-                    }
-                    return@launch
-                }
-
                 withContext(Dispatchers.Main) {
+                    downloadBtn.isEnabled = true
                     Toast.makeText(this@ProjectManagementActivity, "APK скачан: $apkFileName", Toast.LENGTH_SHORT).show()
 
-                    // Запуск установки APK
+                    // Запуск установки
                     val intent = Intent(Intent.ACTION_VIEW)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-
                     val apkUri: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         FileProvider.getUriForFile(
                             this@ProjectManagementActivity,
                             "${packageName}.fileprovider",
                             apkFile
-                        ).also { _ ->
-                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        }
+                        ).also { _ -> intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }
                     } else {
                         Uri.fromFile(apkFile)
                     }
-
                     intent.setDataAndType(apkUri, "application/vnd.android.package-archive")
                     startActivity(intent)
                 }
@@ -105,10 +113,13 @@ class ProjectManagementActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    downloadBtn.isEnabled = true
                     Toast.makeText(this@ProjectManagementActivity, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
     }
+
 
 }
